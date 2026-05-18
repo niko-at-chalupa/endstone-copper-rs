@@ -1,5 +1,4 @@
 #define FMT_HEADER_ONLY
-#include <endstone/event/player/player_join_event.h>
 #include <endstone/player.h>
 #include <endstone/plugin/plugin.h>
 #include <endstone/plugin/plugin_description.h>
@@ -12,7 +11,6 @@ struct RsPluginVTable {
     void (*on_load)(void *rust_plugin);
     void (*on_enable)(void *rust_plugin);
     void (*on_disable)(void *rust_plugin);
-    void (*on_player_join)(void *rust_plugin, endstone::Player *player);
     void (*drop)(void *rust_plugin);  // destructor
 };
 
@@ -54,22 +52,11 @@ public:
     }
 
     void onEnable() override {
-        if (vtable_.on_player_join) {
-            registerEvent<endstone::PlayerJoinEvent>(
-                &RustPluginBridge::onPlayerJoin, *this
-            );
-        }
         if (vtable_.on_enable) vtable_.on_enable(rust_ptr_);
     }
 
     void onDisable() override {
         if (vtable_.on_disable) vtable_.on_disable(rust_ptr_);
-    }
-
-    void onPlayerJoin(endstone::PlayerJoinEvent &event) {
-        if (vtable_.on_player_join) {
-            vtable_.on_player_join(rust_ptr_, &event.getPlayer());
-        }
     }
 
 private:

@@ -4,7 +4,6 @@ pub struct RsPluginVTable {
     pub on_load:        Option<unsafe extern "C" fn(*mut ())>,
     pub on_enable:      Option<unsafe extern "C" fn(*mut ())>,
     pub on_disable:     Option<unsafe extern "C" fn(*mut ())>,
-    pub on_player_join: Option<unsafe extern "C" fn(*mut (), *mut ())>,
     pub drop:           Option<unsafe extern "C" fn(*mut ())>,
 }
 
@@ -23,7 +22,6 @@ pub static mut ENDSTONE_RS_VTABLE: RsPluginVTable = RsPluginVTable {
     on_load:        None,
     on_enable:      None,
     on_disable:     None,
-    on_player_join: None,
     drop:           None,
 };
 
