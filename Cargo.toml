@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "copper",
+    "copper-macros",
+]
+resolver = "2"

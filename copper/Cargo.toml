@@ -1,0 +1,19 @@
+[package]
+name = "endstone-copper"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = [
+    "cdylib",
+    "rlib",
+]
+
+[dependencies]
+endstone-copper-macros = { path = "../copper-macros" }
+
+[profile.release]
+lto = false
+
+[build-dependencies]
+cc = "1"
