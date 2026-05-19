@@ -69,7 +69,7 @@ pub unsafe extern "C" fn trampoline_drop<T: Plugin>(ptr: *mut ()) {
 /// # Safety
 /// Must only be called once, from `endstone_rs_init()`, before the C++
 /// shim reads any of the globals.
-pub unsafe fn register_plugin<T: Plugin>(plugin: T, meta: PluginMeta) {
+pub fn register_plugin<T: Plugin>(plugin: T, meta: PluginMeta) {
     let boxed = Box::new(plugin);
     let raw = Box::into_raw(boxed) as *mut ();
 

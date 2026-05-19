@@ -24,11 +24,9 @@ use syn::{parse_macro_input, ItemImpl};
 pub fn endstone_plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemImpl);
 
-    // Parse attributes: name, version, description, author
-    // (simplified — a real impl would use syn to parse the attr properly)
     let attr_str = attr.to_string();
-    let name        = extract_attr(&attr_str, "name")        .unwrap_or("unnamed");
-    let version     = extract_attr(&attr_str, "version")     .unwrap_or("0.0.0");
+    let name        = extract_attr(&attr_str, "name")       .unwrap_or("unnamed");
+    let version     = extract_attr(&attr_str, "version")    .unwrap_or("0.0.0");
     let description = extract_attr(&attr_str, "description");
     let author      = extract_attr(&attr_str, "author");
 
@@ -44,14 +42,13 @@ pub fn endstone_plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     let expanded = quote! {
-        #input  // emit the original impl block unchanged
+        #input
 
-        // This is what shim.cpp calls:
-        #[no_mangle]
-        pub unsafe extern "C" fn endstone_rs_init() {
-            endstone::plugin::register_plugin(
+        #[unsafe(no_mangle)]
+        pub extern "C" fn endstone_rs_init() {
+            endstone_copper::plugin::register_plugin(
                 <#self_ty as Default>::default(),
-                endstone::PluginMeta {
+                endstone_copper::PluginMeta {
                     name:        #name,
                     version:     #version,
                     description: #desc_tokens,
@@ -65,7 +62,6 @@ pub fn endstone_plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn extract_attr<'a>(attr: &'a str, key: &str) -> Option<&'a str> {
-    // Naive extraction — good enough for a draft
     let needle = format!("{} = \"", key);
     let start  = attr.find(&needle)? + needle.len();
     let end    = attr[start..].find('"')? + start;
