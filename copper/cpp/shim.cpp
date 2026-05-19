@@ -19,14 +19,16 @@ struct RsPluginMeta {
     const char *version;
     const char *description;  // nullable
     const char *author;       // nullable
+    const char *website;      // nullable
+    const char *prefix;       // nullable
 };
 
 // Set by Rust before init_endstone_plugin() returns (see ffi.rs)
 extern "C" {
     // Rust fills these in via endstone_register_plugin()
-    extern RsPluginVTable  ENDSTONE_RS_VTABLE;
-    extern RsPluginMeta    ENDSTONE_RS_META;
-    extern void           *ENDSTONE_RS_PLUGIN_PTR;  // Box<T> raw ptr
+    extern RsPluginVTable ENDSTONE_RS_VTABLE;
+    extern RsPluginMeta ENDSTONE_RS_META;
+    extern void *ENDSTONE_RS_PLUGIN_PTR; // Box<T> raw ptr
 }
 
 // ── The C++ plugin wrapper ────────────────────────────────────────────────────
@@ -77,10 +79,21 @@ endstone::Plugin *endstone_rs_init_plugin() {
 
     // Build a PluginDescription from the meta Rust provided
     auto &m = ENDSTONE_RS_META;
+
+    std::vector<std::string> authors;
+    if (m.author) {
+        authors.emplace_back(m.author);
+    }
+
     endstone::PluginDescription desc(
-        m.name    ? m.name    : "unknown",
-        m.version ? m.version : "0.0.0"
-        // author, description etc can be wired up later
+        m.name ? m.name : "unknown",
+        m.version ? m.version : "0.0.0",
+        m.description ? m.description : "",
+        endstone::PluginLoadOrder::PostWorld,
+        authors,
+        {}, // contributors
+        m.website ? m.website : "",
+        m.prefix ? m.prefix : ""
     );
 
     return new RustPluginBridge(

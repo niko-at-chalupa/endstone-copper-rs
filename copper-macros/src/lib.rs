@@ -25,20 +25,30 @@ pub fn endstone_plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as ItemImpl);
 
     let attr_str = attr.to_string();
-    let name        = extract_attr(&attr_str, "name")       .unwrap_or("unnamed");
-    let version     = extract_attr(&attr_str, "version")    .unwrap_or("0.0.0");
+    let name = extract_attr(&attr_str, "name").unwrap_or("unnamed");
+    let version = extract_attr(&attr_str, "version").unwrap_or("0.0.0");
     let description = extract_attr(&attr_str, "description");
-    let author      = extract_attr(&attr_str, "author");
+    let author = extract_attr(&attr_str, "author");
+    let website = extract_attr(&attr_str, "website");
+    let prefix = extract_attr(&attr_str, "prefix");
 
     let self_ty = &input.self_ty;
 
     let desc_tokens = match description {
         Some(d) => quote! { Some(#d) },
-        None    => quote! { None },
+        None => quote! { None },
     };
     let author_tokens = match author {
         Some(a) => quote! { Some(#a) },
-        None    => quote! { None },
+        None => quote! { None },
+    };
+    let website_tokens = match website {
+        Some(w) => quote! { Some(#w) },
+        None => quote! { None },
+    };
+    let prefix_tokens = match prefix {
+        Some(p) => quote! { Some(#p) },
+        None => quote! { None },
     };
 
     let expanded = quote! {
@@ -49,10 +59,12 @@ pub fn endstone_plugin(attr: TokenStream, item: TokenStream) -> TokenStream {
             endstone_copper::plugin::register_plugin(
                 <#self_ty as Default>::default(),
                 endstone_copper::PluginMeta {
-                    name:        #name,
-                    version:     #version,
+                    name: #name,
+                    version: #version,
                     description: #desc_tokens,
-                    author:      #author_tokens,
+                    author: #author_tokens,
+                    website: #website_tokens,
+                    prefix: #prefix_tokens,
                 },
             );
         }
