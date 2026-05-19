@@ -42,7 +42,6 @@ pub static mut ENDSTONE_RS_PLUGIN_PTR: *mut () = std::ptr::null_mut();
 
 unsafe extern "C" {
     fn endstone_rs_init_plugin() -> *mut ();
-    pub fn endstone_player_send_message(player: *mut (), message: *const std::ffi::c_char);
 }
 
 #[unsafe(no_mangle)]

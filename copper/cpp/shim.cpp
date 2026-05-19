@@ -1,5 +1,4 @@
 #define FMT_HEADER_ONLY
-#include <endstone/player.h>
 #include <endstone/plugin/plugin.h>
 #include <endstone/plugin/plugin_description.h>
 #include <cstring>
@@ -101,12 +100,4 @@ endstone::Plugin *endstone_rs_init_plugin() {
         ENDSTONE_RS_VTABLE,
         ENDSTONE_RS_PLUGIN_PTR
     );
-}
-
-// ── Helpers called by Rust ────────────────────────────────────────────────────
-
-extern "C" void endstone_player_send_message(endstone::Player *player, const char *message) {
-    if (player && message) {
-        player->sendMessage(message);
-    }
 }

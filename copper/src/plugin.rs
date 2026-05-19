@@ -13,21 +13,6 @@ pub trait Plugin: Send + 'static {
     fn on_disable(&mut self) {}
 }
 
-/// Represents a player.
-pub struct Player {
-    ptr: *mut (),
-}
-
-impl Player {
-    /// Sends this player a message
-    pub fn send_message(&self, message: &str) {
-        let c_msg = CString::new(message).unwrap();
-        unsafe {
-            ffi::endstone_player_send_message(self.ptr, c_msg.as_ptr());
-        }
-    }
-}
-
 /// Metadata about your plugin
 pub struct PluginMeta {
     pub name: &'static str,
