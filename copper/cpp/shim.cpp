@@ -1,8 +1,42 @@
 #define FMT_HEADER_ONLY
 #include <endstone/plugin/plugin.h>
 #include <endstone/plugin/plugin_description.h>
+#include <endstone/server.h>
+#include <endstone/player.h>
+#include <endstone/level/level.h>
 #include <cstring>
 #include <string>
+#include <vector>
+
+namespace endstone {
+
+using CriteriaType = Criteria::Type;
+
+size_t get_online_players_count(const Server& server) {
+    return server.getOnlinePlayers().size();
+}
+
+Player* get_online_player_at(const Server& server, size_t index) {
+    auto players = server.getOnlinePlayers();
+    if (index >= players.size()) {
+        return nullptr;
+    }
+    return players[index];
+}
+
+size_t get_dimensions_count(const Level& level) {
+    return level.getDimensions().size();
+}
+
+Dimension* get_dimension_at(const Level& level, size_t index) {
+    auto dims = level.getDimensions();
+    if (index >= dims.size()) {
+        return nullptr;
+    }
+    return dims[index];
+}
+
+} // namespace endstone
 
 // ── Types the Rust side fills in ─────────────────────────────────────────────
 
