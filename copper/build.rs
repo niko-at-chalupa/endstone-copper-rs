@@ -1,17 +1,23 @@
-fn main() {
-    println!("cargo:rerun-if-changed=cpp/shim.cpp");
-
+fn main() -> miette::Result<()> {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap();
     let shim_path = format!("{}/cpp/shim.cpp", manifest_dir);
     let endstone_include = std::env::var("ENDSTONE_INCLUDE")
         .unwrap_or_else(|_| format!("{}/../vendor/endstone/include", manifest_dir));
+
+    println!("cargo:rerun-if-changed=cpp/shim.cpp");
+    println!("cargo:rerun-if-changed=src/lib.rs"); // For autocxx
 
     unsafe {
         // Force clang++ to ensure we can use libc++
         std::env::set_var("CXX", "clang++");
     }
 
-    cc::Build::new()
+    // Configure autocxx
+    let mut builder = autocxx_build::Builder::new("src/lib.rs", [&endstone_include])
+        .extra_clang_args(&["-std=c++20", "-stdlib=libc++"])
+        .build()?;
+    
+    builder
         .cpp(true)
         .std("c++20")
         .compiler("clang++")
@@ -23,8 +29,9 @@ fn main() {
 
     println!("cargo:rustc-link-search=native=/usr/lib");
     println!("cargo:rustc-link-search=native=/usr/lib64");
-    println!("cargo:rustc-link-lib=static=endstone_shim");
     println!("cargo:rustc-link-lib=static=c++");
     println!("cargo:rustc-link-lib=static=c++abi");
     println!("cargo:rustc-link-arg=-Wl,--export-dynamic");
+
+    Ok(())
 }

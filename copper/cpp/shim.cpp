@@ -1,15 +1,49 @@
 #define FMT_HEADER_ONLY
 #include <endstone/plugin/plugin.h>
 #include <endstone/plugin/plugin_description.h>
+#include <endstone/server.h>
+#include <endstone/player.h>
+#include <endstone/level/level.h>
 #include <cstring>
 #include <string>
+#include <vector>
+
+namespace endstone {
+
+using CriteriaType = Criteria::Type;
+
+size_t get_online_players_count(const Server& server) {
+    return server.getOnlinePlayers().size();
+}
+
+Player* get_online_player_at(const Server& server, size_t index) {
+    auto players = server.getOnlinePlayers();
+    if (index >= players.size()) {
+        return nullptr;
+    }
+    return players[index];
+}
+
+size_t get_dimensions_count(const Level& level) {
+    return level.getDimensions().size();
+}
+
+Dimension* get_dimension_at(const Level& level, size_t index) {
+    auto dims = level.getDimensions();
+    if (index >= dims.size()) {
+        return nullptr;
+    }
+    return dims[index];
+}
+
+} // namespace endstone
 
 // ── Types the Rust side fills in ─────────────────────────────────────────────
 
 struct RsPluginVTable {
-    void (*on_load)(void *rust_plugin);
-    void (*on_enable)(void *rust_plugin);
-    void (*on_disable)(void *rust_plugin);
+    void (*on_load)(void *rust_plugin, const endstone::Server *server);
+    void (*on_enable)(void *rust_plugin, const endstone::Server *server);
+    void (*on_disable)(void *rust_plugin, const endstone::Server *server);
     void (*drop)(void *rust_plugin);  // destructor
 };
 
@@ -30,7 +64,7 @@ extern "C" {
     extern void *ENDSTONE_RS_PLUGIN_PTR; // Box<T> raw ptr
 }
 
-// ── The C++ plugin wrapper ────────────────────────────────────────────────────
+// ── The actual C++ Plugin class ─────────────────────────────────────────────
 
 class RustPluginBridge final : public endstone::Plugin {
 public:
@@ -49,15 +83,15 @@ public:
     }
 
     void onLoad() override {
-        if (vtable_.on_load) vtable_.on_load(rust_ptr_);
+        if (vtable_.on_load) vtable_.on_load(rust_ptr_, &getServer());
     }
 
     void onEnable() override {
-        if (vtable_.on_enable) vtable_.on_enable(rust_ptr_);
+        if (vtable_.on_enable) vtable_.on_enable(rust_ptr_, &getServer());
     }
 
     void onDisable() override {
-        if (vtable_.on_disable) vtable_.on_disable(rust_ptr_);
+        if (vtable_.on_disable) vtable_.on_disable(rust_ptr_, &getServer());
     }
 
 private:
@@ -65,6 +99,8 @@ private:
     RsPluginVTable vtable_;
     void *rust_ptr_;
 };
+
+
 
 // ── Entry point Endstone calls ────────────────────────────────────────────────
 
