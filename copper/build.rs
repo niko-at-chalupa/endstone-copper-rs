@@ -31,6 +31,8 @@ fn main() -> miette::Result<()> {
     println!("cargo:rustc-link-search=native=/usr/lib64");
     println!("cargo:rustc-link-lib=static=c++");
     println!("cargo:rustc-link-lib=static=c++abi");
+    let link_script = format!("{}/link.ver", manifest_dir);
+    println!("cargo:rustc-link-arg=-Wl,--version-script={}", link_script);
     println!("cargo:rustc-link-arg=-Wl,--export-dynamic");
 
     Ok(())

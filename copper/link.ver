@@ -1,0 +1,10 @@
+{
+    global:
+        init_endstone_plugin;
+        ENDSTONE_RS_VTABLE;
+        ENDSTONE_RS_META;
+        ENDSTONE_RS_PLUGIN_PTR;
+        cxxbridge1*;
+    local:
+        *;
+};
