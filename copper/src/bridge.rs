@@ -1,9 +1,9 @@
 /// Should mirror RsPluginVTable in shim.cpp
 #[repr(C)]
 pub struct RsPluginVTable {
-    pub on_load: Option<unsafe extern "C" fn(*mut ())>,
-    pub on_enable: Option<unsafe extern "C" fn(*mut ())>,
-    pub on_disable: Option<unsafe extern "C" fn(*mut ())>,
+    pub on_load: Option<unsafe extern "C" fn(*mut (), *const Server)>,
+    pub on_enable: Option<unsafe extern "C" fn(*mut (), *const Server)>,
+    pub on_disable: Option<unsafe extern "C" fn(*mut (), *const Server)>,
     pub drop: Option<unsafe extern "C" fn(*mut ())>,
 }
 
@@ -47,4 +47,45 @@ unsafe extern "C" {
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn init_endstone_plugin() -> *mut () {
     unsafe { endstone_rs_init_plugin() }
+}
+
+#[repr(C)]
+pub struct Server {
+    _unused: [u8; 0],
+}
+
+unsafe impl cxx::ExternType for Server {
+    type Id = cxx::type_id!("endstone::Server");
+    type Kind = cxx::kind::Opaque;
+}
+
+#[repr(C)]
+pub struct Logger {
+    _unused: [u8; 0],
+}
+
+unsafe impl cxx::ExternType for Logger {
+    type Id = cxx::type_id!("endstone::Logger");
+    type Kind = cxx::kind::Opaque;
+}
+
+#[cxx::bridge(namespace = "endstone")]
+mod logger_ffi {
+    unsafe extern "C++" {
+        include!("endstone/logger.h");
+        include!("endstone/server.h");
+
+        type Logger = crate::bridge::Logger;
+        fn info(self: &Logger, message: &CxxString);
+        fn warning(self: &Logger, message: &CxxString);
+        fn error(self: &Logger, message: &CxxString);
+
+        type Server = crate::bridge::Server;
+        #[rust_name = "get_name"]
+        fn getName(self: &Server) -> String;
+        #[rust_name = "get_version"]
+        fn getVersion(self: &Server) -> String;
+        #[rust_name = "get_logger"]
+        fn getLogger(self: &Server) -> &Logger;
+    }
 }

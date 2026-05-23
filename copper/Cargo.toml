@@ -11,9 +11,13 @@ crate-type = [
 
 [dependencies]
 endstone-copper-macros = { path = "../copper-macros" }
+autocxx = "0.27"
+cxx = "1.0"
 
 [profile.release]
 lto = false
 
 [build-dependencies]
 cc = "1"
+autocxx-build = "0.27"
+miette = { version = "5", features = ["fancy"] }

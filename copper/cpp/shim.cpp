@@ -7,9 +7,9 @@
 // ── Types the Rust side fills in ─────────────────────────────────────────────
 
 struct RsPluginVTable {
-    void (*on_load)(void *rust_plugin);
-    void (*on_enable)(void *rust_plugin);
-    void (*on_disable)(void *rust_plugin);
+    void (*on_load)(void *rust_plugin, const endstone::Server *server);
+    void (*on_enable)(void *rust_plugin, const endstone::Server *server);
+    void (*on_disable)(void *rust_plugin, const endstone::Server *server);
     void (*drop)(void *rust_plugin);  // destructor
 };
 
@@ -30,7 +30,7 @@ extern "C" {
     extern void *ENDSTONE_RS_PLUGIN_PTR; // Box<T> raw ptr
 }
 
-// ── The C++ plugin wrapper ────────────────────────────────────────────────────
+// ── The actual C++ Plugin class ─────────────────────────────────────────────
 
 class RustPluginBridge final : public endstone::Plugin {
 public:
@@ -49,15 +49,15 @@ public:
     }
 
     void onLoad() override {
-        if (vtable_.on_load) vtable_.on_load(rust_ptr_);
+        if (vtable_.on_load) vtable_.on_load(rust_ptr_, &getServer());
     }
 
     void onEnable() override {
-        if (vtable_.on_enable) vtable_.on_enable(rust_ptr_);
+        if (vtable_.on_enable) vtable_.on_enable(rust_ptr_, &getServer());
     }
 
     void onDisable() override {
-        if (vtable_.on_disable) vtable_.on_disable(rust_ptr_);
+        if (vtable_.on_disable) vtable_.on_disable(rust_ptr_, &getServer());
     }
 
 private:
@@ -65,6 +65,8 @@ private:
     RsPluginVTable vtable_;
     void *rust_ptr_;
 };
+
+
 
 // ── Entry point Endstone calls ────────────────────────────────────────────────
 
