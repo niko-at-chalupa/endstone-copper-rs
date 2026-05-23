@@ -1,22 +1,16 @@
 use std::ffi::CString;
-use crate::bridge;
-
-/// Context passed to plugin methods
-pub struct Context<'a> {
-    pub server: &'a bridge::Server,
-    pub logger: &'a bridge::Logger,
-}
+use crate::ffi;
 
 /// Trait plugins should implement
 pub trait Plugin: Send + 'static {
     /// Called after a plugin is loaded but before it has been enabled.
-    fn on_load(&mut self, _ctx: Context) {}
+    fn on_load(&mut self) {}
 
     /// Called when this plugin is enabled.
-    fn on_enable(&mut self, _ctx: Context) {}
+    fn on_enable(&mut self) {}
 
     /// Called when this plugin is disabled.
-    fn on_disable(&mut self, _ctx: Context) {}
+    fn on_disable(&mut self) {}
 }
 
 /// Metadata about your plugin
@@ -29,42 +23,26 @@ pub struct PluginMeta {
     pub prefix: Option<&'static str>,
 }
 
-pub unsafe extern "C" fn trampoline_on_load<T: Plugin>(ptr: *mut (), server: *const bridge::Server) {
+pub unsafe extern "C" fn trampoline_on_load<T: Plugin>(ptr: *mut ()) {
     unsafe {
         let plugin = &mut *(ptr as *mut T);
-        let server = &*server;
-        let ctx = Context {
-            server,
-            logger: server.get_logger(),
-        };
-        plugin.on_load(ctx);
+        plugin.on_enable();
     }
 }
 
-pub unsafe extern "C" fn trampoline_on_enable<T: Plugin>(ptr: *mut (), server: *const bridge::Server) {
+pub unsafe extern "C" fn trampoline_on_enable<T: Plugin>(ptr: *mut ()) {
     unsafe {
         let plugin = &mut *(ptr as *mut T);
-        let server = &*server;
-        let ctx = Context {
-            server,
-            logger: server.get_logger(),
-        };
-        plugin.on_enable(ctx);
+        plugin.on_enable();
     }
 }
 
-pub unsafe extern "C" fn trampoline_on_disable<T: Plugin>(ptr: *mut (), server: *const bridge::Server) {
+pub unsafe extern "C" fn trampoline_on_disable<T: Plugin>(ptr: *mut ()) {
     unsafe {
         let plugin = &mut *(ptr as *mut T);
-        let server = &*server;
-        let ctx = Context {
-            server,
-            logger: server.get_logger(),
-        };
-        plugin.on_disable(ctx);
+        plugin.on_disable();
     }
 }
-
 
 pub unsafe extern "C" fn trampoline_drop<T: Plugin>(ptr: *mut ()) {
     unsafe {
@@ -73,7 +51,7 @@ pub unsafe extern "C" fn trampoline_drop<T: Plugin>(ptr: *mut ()) {
 }
 
 /// Called by the proc macro's generated `endstone_rs_init()`.
-/// Sets up the globals bridge.cpp reads.
+/// Sets up the globals shim.cpp reads.
 ///
 /// # Safety
 /// Must only be called once, from `endstone_rs_init()`, before the C++
@@ -83,9 +61,9 @@ pub fn register_plugin<T: Plugin>(plugin: T, meta: PluginMeta) {
     let raw = Box::into_raw(boxed) as *mut ();
 
     unsafe {
-        bridge::ENDSTONE_RS_PLUGIN_PTR = raw;
+        ffi::ENDSTONE_RS_PLUGIN_PTR = raw;
 
-        bridge::ENDSTONE_RS_VTABLE = bridge::RsPluginVTable {
+        ffi::ENDSTONE_RS_VTABLE = ffi::RsPluginVTable {
             on_load: Some(trampoline_on_load::<T>),
             on_enable: Some(trampoline_on_enable::<T>),
             on_disable: Some(trampoline_on_disable::<T>),
@@ -97,7 +75,7 @@ pub fn register_plugin<T: Plugin>(plugin: T, meta: PluginMeta) {
         let name = CString::new(meta.name).unwrap();
         let version = CString::new(meta.version).unwrap();
 
-        bridge::ENDSTONE_RS_META = bridge::RsPluginMeta {
+        ffi::ENDSTONE_RS_META = ffi::RsPluginMeta {
             name: name.into_raw(),
             version: version.into_raw(),
             description: meta
